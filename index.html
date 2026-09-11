@@ -1,0 +1,742 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CivicFix AI</title>
+
+<style>
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  font-family: Arial, sans-serif;
+}
+
+body {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #eef7ff, #f7f4ff);
+  color: #172033;
+}
+
+header {
+  background: linear-gradient(135deg, #2457d6, #673ab7);
+  color: white;
+  padding: 28px 20px;
+  text-align: center;
+}
+
+header h1 {
+  font-size: 34px;
+  margin-bottom: 8px;
+}
+
+header p {
+  opacity: 0.92;
+}
+
+.container {
+  max-width: 1050px;
+  margin: 30px auto;
+  padding: 0 18px;
+}
+
+.card {
+  background: white;
+  border-radius: 18px;
+  padding: 24px;
+  margin-bottom: 22px;
+  box-shadow: 0 8px 25px rgba(40, 50, 90, 0.10);
+}
+
+.card h2 {
+  margin-bottom: 15px;
+  color: #2457d6;
+}
+
+label {
+  display: block;
+  font-weight: bold;
+  margin: 14px 0 7px;
+}
+
+textarea,
+input {
+  width: 100%;
+  padding: 13px;
+  border: 1px solid #ccd3e0;
+  border-radius: 10px;
+  font-size: 15px;
+  outline: none;
+}
+
+textarea:focus,
+input:focus {
+  border-color: #2457d6;
+}
+
+textarea {
+  min-height: 130px;
+  resize: vertical;
+}
+
+.buttons {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-top: 18px;
+}
+
+button {
+  border: none;
+  border-radius: 10px;
+  padding: 12px 18px;
+  font-size: 15px;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.primary {
+  background: #2457d6;
+  color: white;
+}
+
+.secondary {
+  background: #e9efff;
+  color: #2457d6;
+}
+
+.demo {
+  background: #fff3cd;
+  color: #765600;
+}
+
+button:hover {
+  opacity: 0.88;
+}
+
+#preview {
+  max-width: 100%;
+  max-height: 280px;
+  margin-top: 15px;
+  border-radius: 12px;
+  display: none;
+}
+
+.status {
+  padding: 12px;
+  background: #f0f4ff;
+  border-radius: 10px;
+  margin-top: 15px;
+  display: none;
+}
+
+.result {
+  display: none;
+}
+
+.result-box {
+  background: #f8faff;
+  border-left: 5px solid #2457d6;
+  padding: 15px;
+  margin: 12px 0;
+  border-radius: 8px;
+}
+
+.result-box h3 {
+  margin-bottom: 7px;
+  color: #2457d6;
+}
+
+.urgency {
+  font-weight: bold;
+  padding: 8px 12px;
+  border-radius: 8px;
+  display: inline-block;
+}
+
+.low {
+  background: #d9f7df;
+  color: #176b2c;
+}
+
+.medium {
+  background: #fff0c2;
+  color: #765600;
+}
+
+.high {
+  background: #ffd9d9;
+  color: #a30000;
+}
+
+.complaint {
+  white-space: pre-wrap;
+  background: #fff;
+  border: 1px solid #d8deea;
+  padding: 15px;
+  border-radius: 10px;
+  line-height: 1.6;
+}
+
+footer {
+  text-align: center;
+  padding: 25px;
+  color: #667085;
+}
+
+.small {
+  font-size: 13px;
+  color: #667085;
+  margin-top: 8px;
+}
+</style>
+</head>
+
+<body>
+
+<header>
+  <h1>🏙️ CivicFix AI</h1>
+  <p>Turn everyday civic problems into clear, actionable complaints.</p>
+</header>
+
+<div class="container">
+
+  <div class="card">
+
+    <h2>📢 Report a Civic Problem</h2>
+
+    <label for="problem">
+      Describe the problem
+    </label>
+
+    <textarea id="problem"
+      placeholder="Example: There is a large pothole near my college and vehicles are struggling to pass."></textarea>
+
+    <label for="location">
+      📍 Location
+    </label>
+
+    <input id="location"
+      placeholder="Example: Near ABC College, Bengaluru">
+
+    <label for="photo">
+      📸 Add a photo (optional)
+    </label>
+
+    <input type="file"
+      id="photo"
+      accept="image/*">
+
+    <img id="preview">
+
+    <div class="buttons">
+
+      <button class="secondary" onclick="startVoice()">
+        🎤 Speak
+      </button>
+
+      <button class="primary" onclick="analyzeWithGemini()">
+        🤖 Analyze with Gemini
+      </button>
+
+      <button class="demo" onclick="runDemo()">
+        🧪 Demo Mode
+      </button>
+
+    </div>
+
+    <div id="status" class="status"></div>
+
+  </div>
+
+
+  <div id="result" class="card result">
+
+    <h2>🧠 CivicFix AI Analysis</h2>
+
+    <div class="result-box">
+      <h3>Intent</h3>
+      <p id="intent"></p>
+    </div>
+
+    <div class="result-box">
+      <h3>Category</h3>
+      <p id="category"></p>
+    </div>
+
+    <div class="result-box">
+      <h3>Key Information</h3>
+      <p id="keyInfo"></p>
+    </div>
+
+    <div class="result-box">
+      <h3>Missing Information</h3>
+      <p id="missing"></p>
+    </div>
+
+    <div class="result-box">
+      <h3>Verification</h3>
+      <p id="verification"></p>
+    </div>
+
+    <div class="result-box">
+      <h3>Urgency</h3>
+      <span id="urgency" class="urgency"></span>
+    </div>
+
+    <div class="result-box">
+      <h3>Recommended Action Plan</h3>
+      <p id="action"></p>
+    </div>
+
+    <div class="result-box">
+      <h3>📋 Ready-to-Submit Complaint</h3>
+      <div id="complaint" class="complaint"></div>
+    </div>
+
+  </div>
+
+</div>
+
+<footer>
+  CivicFix AI • AI-powered civic problem reporting
+  <div class="small">
+    AI-generated suggestions should be checked before submitting official complaints.
+  </div>
+</footer>
+
+
+<script>
+
+let selectedImage = null;
+
+
+/* IMAGE PREVIEW */
+
+document.getElementById("photo").addEventListener("change", function(event) {
+
+  const file = event.target.files[0];
+
+  if (!file) return;
+
+  selectedImage = file;
+
+  const preview = document.getElementById("preview");
+
+  preview.src = URL.createObjectURL(file);
+
+  preview.style.display = "block";
+
+});
+
+
+/* STATUS */
+
+function showStatus(message) {
+
+  const status = document.getElementById("status");
+
+  status.innerText = message;
+
+  status.style.display = "block";
+
+}
+
+
+/* VOICE INPUT */
+
+function startVoice() {
+
+  const SpeechRecognition =
+    window.SpeechRecognition ||
+    window.webkitSpeechRecognition;
+
+  if (!SpeechRecognition) {
+
+    alert("Voice input is not supported in this browser.");
+
+    return;
+  }
+
+  const recognition = new SpeechRecognition();
+
+  recognition.lang = "en-IN";
+
+  recognition.start();
+
+  showStatus("🎤 Listening... Speak now.");
+
+  recognition.onresult = function(event) {
+
+    document.getElementById("problem").value =
+      event.results[0][0].transcript;
+
+    showStatus("✅ Voice input added.");
+
+  };
+
+  recognition.onerror = function() {
+
+    showStatus("Could not capture voice input.");
+
+  };
+
+}
+
+
+/* DISPLAY RESULT */
+
+function displayResult(data) {
+
+  document.getElementById("result").style.display = "block";
+
+  document.getElementById("intent").innerText =
+    data.intent;
+
+  document.getElementById("category").innerText =
+    data.category;
+
+  document.getElementById("keyInfo").innerText =
+    data.keyInfo;
+
+  document.getElementById("missing").innerText =
+    data.missing;
+
+  document.getElementById("verification").innerText =
+    data.verification;
+
+  document.getElementById("action").innerText =
+    data.action;
+
+  document.getElementById("complaint").innerText =
+    data.complaint;
+
+  const urgency =
+    document.getElementById("urgency");
+
+  urgency.innerText = data.urgency;
+
+  urgency.className = "urgency";
+
+  if (data.urgency.toLowerCase().includes("high")) {
+
+    urgency.classList.add("high");
+
+  } else if (data.urgency.toLowerCase().includes("medium")) {
+
+    urgency.classList.add("medium");
+
+  } else {
+
+    urgency.classList.add("low");
+
+  }
+
+  document.getElementById("result")
+    .scrollIntoView({ behavior: "smooth" });
+
+}
+
+
+/* DEMO MODE */
+
+function runDemo() {
+
+  const problem =
+    document.getElementById("problem").value.trim();
+
+  const location =
+    document.getElementById("location").value.trim();
+
+  if (!problem) {
+
+    alert("Please describe the civic problem first.");
+
+    return;
+  }
+
+  showStatus("🧪 Demo Mode: Creating structured civic report...");
+
+  setTimeout(function() {
+
+    let category = "General Civic Issue";
+
+    const text = problem.toLowerCase();
+
+    if (text.includes("pothole") ||
+        text.includes("road")) {
+
+      category = "Road / Infrastructure";
+
+    } else if (text.includes("garbage") ||
+               text.includes("waste")) {
+
+      category = "Waste Management";
+
+    } else if (text.includes("water") ||
+               text.includes("leak")) {
+
+      category = "Water / Drainage";
+
+    } else if (text.includes("street light") ||
+               text.includes("light")) {
+
+      category = "Street Lighting";
+
+    } else if (text.includes("traffic")) {
+
+      category = "Traffic";
+
+    }
+
+    let urgency = "Medium";
+
+    if (text.includes("danger") ||
+        text.includes("accident") ||
+        text.includes("open manhole")) {
+
+      urgency = "High";
+
+    }
+
+    const locationText =
+      location || "Location not provided";
+
+    const complaint =
+`Subject: Civic Issue Report – ${category}
+
+Dear Concerned Authority,
+
+I would like to report the following civic issue:
+
+Problem:
+${problem}
+
+Location:
+${locationText}
+
+The issue may require attention to improve public safety and convenience.
+
+Kindly inspect the location and take appropriate action.
+
+Thank you.`;
+
+    displayResult({
+
+      intent:
+        "Report and resolve a civic problem",
+
+      category: category,
+
+      keyInfo:
+        "The user has reported: " + problem +
+        (location
+          ? " Location: " + location
+          : ""),
+
+      missing:
+        location
+          ? "Exact landmark, date/time of observation, and supporting evidence may still be useful."
+          : "Exact location, nearby landmark, date/time, and supporting evidence.",
+
+      verification:
+        "This demo uses only the information entered by the user. The reported conditions have not been independently verified.",
+
+      urgency: urgency,
+
+      action:
+        "1. Verify the exact location.\n" +
+        "2. Capture a clear photo if possible.\n" +
+        "3. Identify the appropriate civic authority.\n" +
+        "4. Submit the complaint with the collected information.\n" +
+        "5. Keep the complaint/reference number for follow-up.",
+
+      complaint: complaint
+
+    });
+
+    showStatus(
+      "✅ Demo report generated. No Gemini API call was made."
+    );
+
+  }, 700);
+
+}
+
+
+/* GEMINI MODE */
+
+async function analyzeWithGemini() {
+
+  const problem =
+    document.getElementById("problem").value.trim();
+
+  const location =
+    document.getElementById("location").value.trim();
+
+  if (!problem) {
+
+    alert("Please describe the civic problem first.");
+
+    return;
+  }
+
+
+  /*
+    For a permitted Gemini integration,
+    enter the API key here.
+
+    Never publish a real API key
+    inside a public repository.
+  */
+
+  const apiKey =
+    prompt("Enter your permitted Gemini API key:");
+
+  if (!apiKey) {
+
+    showStatus(
+      "No API key entered. You can use Demo Mode instead."
+    );
+
+    return;
+  }
+
+
+  showStatus("🤖 Gemini is analyzing the civic issue...");
+
+
+  const promptText = `You are CivicFix AI, a civic assistance system.
+
+Analyze the user's civic complaint and return ONLY valid JSON.
+
+User complaint:
+${problem}
+
+Location:
+${location || "Not provided"}
+
+Return this exact structure:
+
+{
+  "intent": "",
+  "category": "",
+  "keyInfo": "",
+  "missing": "",
+  "verification": "",
+  "urgency": "",
+  "action": "",
+  "complaint": ""
+}
+
+Rules:
+- Do not invent facts.
+- Clearly identify information that is missing.
+- Do not claim that external conditions have been verified.
+- Suggest practical and safe civic actions.
+- Do not make legal claims.
+- The complaint should be professional and ready for submission.
+- Urgency should be Low, Medium, or High.`;
+
+
+  try {
+
+    const response = await fetch(
+      "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent",
+      {
+        method: "POST",
+
+        headers: {
+          "Content-Type": "application/json",
+          "x-goog-api-key": apiKey
+        },
+
+        body: JSON.stringify({
+
+          contents: [
+
+            {
+              parts: [
+                {
+                  text: promptText
+                }
+              ]
+            }
+
+          ]
+
+        })
+
+      }
+    );
+
+
+    if (!response.ok) {
+
+      throw new Error(
+        "Gemini request failed: " +
+        response.status
+      );
+
+    }
+
+
+    const result =
+      await response.json();
+
+
+    const text =
+      result.candidates?.[0]?.content?.parts?.[0]?.text;
+
+
+    if (!text) {
+
+      throw new Error(
+        "No response received from Gemini."
+      );
+
+    }
+
+
+    const cleanText =
+      text
+        .replace(/```json/g, "")
+        .replace(/```/g, "")
+        .trim();
+
+
+    const data =
+      JSON.parse(cleanText);
+
+
+    displayResult(data);
+
+
+    showStatus(
+      "✅ Gemini analysis completed."
+    );
+
+  }
+
+  catch (error) {
+
+    console.error(error);
+
+    showStatus(
+      "❌ Gemini could not be used. Try Demo Mode."
+    );
+
+    alert(
+      "Gemini analysis failed.\n\n" +
+      "You can still demonstrate CivicFix AI using Demo Mode."
+    );
+
+  }
+
+}
+
+</script>
+
+</body>
+</html>
